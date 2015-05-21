@@ -1,12 +1,13 @@
 <?php
 
-namespace Ipalaus\File;
+namespace Ipalaus\File\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Ipalaus\File\File;
 use Ipalaus\File\Repository\IlluminateRepository;
 use Ipalaus\File\Storage\Manager as StorageManager;
 
-class FileServiceProvider extends ServiceProvider
+class LaravelServiceProvider extends ServiceProvider
 {
     /**
      * {@inheritDoc}
@@ -15,9 +16,13 @@ class FileServiceProvider extends ServiceProvider
     {
         $this->mergeConfigFrom(realpath(__DIR__ . '/config/config.php'), 'file');
 
-        $this->publishes([realpath(__DIR__ . '/config/config.php') => config_path('file.php')], 'config');
-        $this->publishes([realpath(__DIR__ . '/migrations') => $this->app->databasePath() . '/migrations'],
-            'migrations');
+        $this->publishes([
+            realpath(__DIR__ . '/config/config.php') => $this->app->configPath() . '/file.php'
+        ], 'config');
+
+        $this->publishes([
+            realpath(__DIR__ . '/migrations') => $this->app->databasePath() . '/migrations'
+        ], 'migrations');
     }
 
     /**

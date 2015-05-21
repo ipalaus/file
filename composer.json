@@ -1,7 +1,7 @@
 {
   "name": "ipalaus/file",
-  "description": "A file storage package for the Laravel framework.",
-  "keywords": ["files", "storage", "laravel"],
+  "description": "A file storage package for Laravel & Lumen frameworks.",
+  "keywords": ["files", "storage", "laravel", "lumen"],
   "license": "MIT",
   "authors": [
     {
