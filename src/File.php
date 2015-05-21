@@ -80,20 +80,19 @@ class File
                 'content_hash' => sha1($content),
             ] + $options;
 
-        // move file to storage
+        // write the file to the storage with the injected storage engine
         $handle = $this->storage->write($content, $params);
 
-        // data to persist in the repository
+        // data to persist into the repository
         $data = [
                 'storage_engine' => $this->storage->getEngineName(),
                 'storage_format' => $this->storage->getEngineFormat(),
                 'storage_handle' => $handle,
+                'secret'         => $this->generateSecret(),
             ] + $params;
 
         // finally save it
         $file = $this->repository->create($data);
-
-        // fire event persisted
 
         return $file;
     }
@@ -101,34 +100,35 @@ class File
     /**
      * Read a handle.
      *
-     * @param int|string $handle
-     * @param array      $options
+     * @param int|array $attributes
+     * @param array     $options
      *
      * @return \Symfony\Component\HttpFoundation\Response
      * @throws \Exception
      * @throws \Ipalaus\File\Contracts\FileNotFoundException
      */
-    public function read($handle, array $options = [])
+    public function read($attributes, array $options = [])
     {
-        // if a given handle is numeric we assume that it's a value in our repository
-        if (is_numeric($handle)) {
-            $file = $this->repository->findById($handle);
+        // if a numeric attribute it's given we are probably trying to access to a primary key
+        if (is_numeric($attributes)) {
+            $attributes = ['id' => $attributes];
+        }
 
-            if (is_null($file)) {
-                throw new FileNotFoundException("File '{$handle}' not found in the repository.'");
-            }
+        $file = $this->repository->findByAttributes($attributes);
 
-            $handle = $file->getStorageHandle();
-        } else {
-            throw new \Exception('Not implemented.');
+        if (is_null($file)) {
+            throw new FileNotFoundException('File ' . json_encode($attributes) . ' not found in the repository.');
         }
 
         // get the file data
-        $data = $this->storage->read($handle);
+        $data = $this->storage->read($file->getStorageHandle());
 
+        // return a generated response with the file contents
         if (isset($options['response']) && (bool) $options['response']) {
             return $this->generateResponse($data, $file);
         }
+
+        return $data;
     }
 
     /**
@@ -165,6 +165,16 @@ class File
         return null;
     }
 
+    /**
+     * Generate a Symfony Response with the given raw data. Additionally,
+     * you can add the cache headers to the response (on by default).
+     *
+     * @param string                       $data
+     * @param \Ipalaus\File\Contracts\File $file
+     * @param bool                         $cache
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
+     */
     protected function generateResponse($data, FileContract $file, $cache = true)
     {
         $response = new Response($data, 200, [
@@ -198,5 +208,27 @@ class File
         }
 
         return $file->getFilename();
+    }
+
+    /**
+     * Generate a random alpha-numeric string.
+     *
+     * @param int $length
+     *
+     * @return string
+     */
+    protected function generateSecret($length = 16)
+    {
+        if ( ! function_exists('openssl_random_pseudo_bytes')) {
+            throw new \RuntimeException('OpenSSL extension is required.');
+        }
+
+        $bytes = openssl_random_pseudo_bytes($length * 2);
+
+        if ($bytes === false) {
+            throw new \RuntimeException('Unable to generate random string.');
+        }
+
+        return substr(str_replace(['/', '+', '='], '', base64_encode($bytes)), 0, $length);
     }
 }

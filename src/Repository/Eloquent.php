@@ -22,6 +22,7 @@ class Eloquent extends Model implements File
         'storage_engine',
         'storage_format',
         'storage_handle',
+        'secret',
         'user_id',
         'meta_data',
         'is_explicit_upload',

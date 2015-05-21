@@ -21,4 +21,13 @@ interface Repository
      * @return \Ipalaus\File\Contracts\File|null
      */
     public function findById($id);
+
+    /**
+     * Find a file in the repository with the given attributes.
+     *
+     * @param array $attributes
+     *
+     * @return \Ipalaus\File\Contracts\File|null
+     */
+    public function findByAttributes(array $attributes);
 }

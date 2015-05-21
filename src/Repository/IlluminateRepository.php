@@ -41,6 +41,14 @@ class IlluminateRepository implements Repository
     }
 
     /**
+     * {@inheritDoc}
+     */
+    public function findByAttributes(array $attributes)
+    {
+        return $this->createModel()->where($attributes)->first();
+    }
+
+    /**
      * Create a new model instance.
      *
      * @param array $data

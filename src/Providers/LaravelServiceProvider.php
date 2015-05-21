@@ -14,14 +14,14 @@ class LaravelServiceProvider extends ServiceProvider
      */
     public function boot()
     {
-        $this->mergeConfigFrom(realpath(__DIR__ . '/config/config.php'), 'file');
+        $this->mergeConfigFrom(realpath(__DIR__ . '/../config/config.php'), 'file');
 
         $this->publishes([
-            realpath(__DIR__ . '/config/config.php') => $this->app->configPath() . '/file.php'
+            realpath(__DIR__ . '/../config/config.php') => $this->app->configPath() . '/config.php'
         ], 'config');
 
         $this->publishes([
-            realpath(__DIR__ . '/migrations') => $this->app->databasePath() . '/migrations'
+            realpath(__DIR__ . '/../migrations') => $this->app->databasePath() . '/migrations'
         ], 'migrations');
     }
 
