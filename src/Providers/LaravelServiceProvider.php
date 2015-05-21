@@ -17,7 +17,7 @@ class LaravelServiceProvider extends ServiceProvider
         $this->mergeConfigFrom(realpath(__DIR__ . '/../config/config.php'), 'file');
 
         $this->publishes([
-            realpath(__DIR__ . '/../config/config.php') => $this->app->configPath() . '/config.php'
+            realpath(__DIR__ . '/../config/config.php') => $this->app->configPath() . '/file.php'
         ], 'config');
 
         $this->publishes([
@@ -32,12 +32,7 @@ class LaravelServiceProvider extends ServiceProvider
     {
         $this->registerStorage();
         $this->registerRepository();
-
-        $this->app->bind('Ipalaus\File\File', function ($app) {
-            return new File($app['file.storage.store'], $app['file.repository'], $app['request']->files);
-        });
-
-        $this->app->alias('Ipalaus\File\File', 'file');
+        $this->registerFile();
     }
 
     /**
@@ -66,5 +61,19 @@ class LaravelServiceProvider extends ServiceProvider
         $this->app['file.repository'] = $this->app->share(function ($app) {
             return new IlluminateRepository($app['config']->get('file.model'));
         });
+    }
+
+    /**
+     * Register the File clasas and file alias.
+     *
+     * @return void
+     */
+    protected function registerFile()
+    {
+        $this->app->bind('Ipalaus\File\File', function ($app) {
+            return new File($app['file.storage.store'], $app['file.repository'], $app['request']->files);
+        });
+
+        $this->app->alias('Ipalaus\File\File', 'file');
     }
 }
