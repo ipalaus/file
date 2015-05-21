@@ -49,7 +49,7 @@ class File
     }
 
     /**
-     *
+     * Create a file.
      *
      * @param string|\Symfony\Component\HttpFoundation\File\File $file
      * @param array                                              $options
@@ -98,6 +98,16 @@ class File
         return $file;
     }
 
+    /**
+     * Read a handle.
+     *
+     * @param int|string $handle
+     * @param array      $options
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
+     * @throws \Exception
+     * @throws \Ipalaus\File\Contracts\FileNotFoundException
+     */
     public function read($handle, array $options = [])
     {
         // if a given handle is numeric we assume that it's a value in our repository
@@ -119,6 +129,22 @@ class File
         if (isset($options['response']) && (bool) $options['response']) {
             return $this->generateResponse($data, $file);
         }
+    }
+
+    /**
+     * Response with a given handle.
+     *
+     * @param int|string $id
+     * @param array      $options
+     *
+     * @return \Symfony\Component\HttpFoundation\Response
+     * @throws \Ipalaus\File\Contracts\FileNotFoundException
+     */
+    public function response($id, array $options = [])
+    {
+        $options['response'] = true;
+
+        return $this->read($id, $options);
     }
 
     /**
