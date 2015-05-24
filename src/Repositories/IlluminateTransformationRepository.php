@@ -33,14 +33,6 @@ class IlluminateTransformationRepository implements TransformationRepository
     }
 
     /**
-     * {@inheritDoc}
-     */
-    public function findById($id)
-    {
-        return $this->createModel()->find($id);
-    }
-
-    /**
      * Create a new model instance.
      *
      * @param array $data

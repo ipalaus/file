@@ -8,13 +8,6 @@ use Ipalaus\File\File;
 abstract class Transformer
 {
     /**
-     * File entity contract.
-     *
-     * @var \Ipalaus\File\Contracts\File
-     */
-    protected $entity;
-
-    /**
      * File instance.
      *
      * @var \Ipalaus\File\File
@@ -22,14 +15,30 @@ abstract class Transformer
     protected $file;
 
     /**
+     * File entity contract.
+     *
+     * @var \Ipalaus\File\Contracts\File
+     */
+    protected $entity;
+
+    /**
+     * File content.
+     *
+     * @var string
+     */
+    protected $content;
+
+    /**
      * Create a new thumbnail transfomer instance.
      *
-     * @param \Ipalaus\File\Contracts\File $entity
      * @param \Ipalaus\File\File           $file
+     * @param \Ipalaus\File\Contracts\File $entity
+     * @param string                       $content
      */
-    public function __construct(FileContract $entity, File $file)
+    public function __construct(File $file, FileContract $entity, $content)
     {
-        $this->entity = $entity;
         $this->file = $file;
+        $this->entity = $entity;
+        $this->content = $content;
     }
 }

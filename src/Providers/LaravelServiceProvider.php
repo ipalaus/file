@@ -76,9 +76,13 @@ class LaravelServiceProvider extends ServiceProvider
     protected function registerFile()
     {
         $this->app->bind('Ipalaus\File\File', function ($app) {
+            $storageEngine = $app['file.storage.store'];
+            $fileRepository = $app['file.repository'];
+            $transformationRepository = $app['file.repository.transformation'];
+            $fileBag = $app['request']->files;
             $transformers = $app['config']->get('file.transformers');
 
-            return new File($app['file.storage.store'], $app['file.repository'], $app['request']->files, $transformers);
+            return new File($storageEngine, $fileRepository, $transformationRepository, $fileBag, $app, $transformers);
         });
 
         $this->app->alias('Ipalaus\File\File', 'file');

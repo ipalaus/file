@@ -2,10 +2,12 @@
 
 namespace Ipalaus\File;
 
+use Illuminate\Contracts\Container\Container;
 use Ipalaus\File\Contracts\File as FileContract;
 use Ipalaus\File\Contracts\FileNotFoundException;
 use Ipalaus\File\Contracts\FileRepository;
 use Ipalaus\File\Contracts\Storage;
+use Ipalaus\File\Contracts\TransformationRepository;
 use Symfony\Component\HttpFoundation\File\File as SymfonyFile;
 use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
 use Symfony\Component\HttpFoundation\FileBag;
@@ -21,11 +23,18 @@ class File
     protected $storage;
 
     /**
-     * FileRepository implementation.
+     * File repository implementation.
      *
      * @var \Ipalaus\File\Contracts\FileRepository
      */
     protected $repository;
+
+    /**
+     * File transformation repository implementation.
+     *
+     * @var \Ipalaus\File\Contracts\TransformationRepository
+     */
+    protected $transformationRepository;
 
     /**
      * Uploaded files ($_FILES).
@@ -35,25 +44,42 @@ class File
     protected $fileBag;
 
     /**
+     * Container instance.
+     *
+     * @var \Illuminate\Contracts\Container\Container
+     */
+    protected $container;
+
+    /**
      * File transformers.
      *
      * @var array
      */
-    protected $transformers;
+    protected $transformers = [];
 
     /**
      * Create a new file instance.
      *
-     * @param \Ipalaus\File\Contracts\Storage           $storage
-     * @param \Ipalaus\File\Contracts\FileRepository    $repository
-     * @param \Symfony\Component\HttpFoundation\FileBag $fileBag
-     * @param array                                     $transformers
+     * @param \Ipalaus\File\Contracts\Storage                  $storage
+     * @param \Ipalaus\File\Contracts\FileRepository           $repository
+     * @param \Ipalaus\File\Contracts\TransformationRepository $transformationRepository
+     * @param \Symfony\Component\HttpFoundation\FileBag        $fileBag
+     * @param \Illuminate\Contracts\Container\Container        $container
+     * @param array                                            $transformers
      */
-    public function __construct(Storage $storage, FileRepository $repository, FileBag $fileBag, array $transformers = [])
-    {
+    public function __construct(
+        Storage $storage,
+        FileRepository $repository,
+        TransformationRepository $transformationRepository,
+        FileBag $fileBag,
+        Container $container,
+        array $transformers = []
+    ) {
         $this->storage = $storage;
         $this->repository = $repository;
+        $this->transformationRepository = $transformationRepository;
         $this->fileBag = $fileBag;
+        $this->container = $container;
         $this->transformers = $transformers;
     }
 
@@ -94,19 +120,31 @@ class File
 
         // data to persist into the repository
         $data = [
-                'storage_engine' => $this->storage->getEngineName(),
-                'storage_format' => $this->storage->getEngineFormat(),
-                'storage_handle' => $handle,
-                'secret'         => $this->generateSecret(),
+                'storage_engine'     => $this->storage->getEngineName(),
+                'storage_format'     => $this->storage->getEngineFormat(),
+                'storage_handle'     => $handle,
+                'secret'             => $this->generateSecret(),
+                'is_explicit_upload' => isset($options['is_explicit_upload']) ? $options['is_explicit_upload'] : true,
             ] + $params;
 
         $entity = $this->repository->create($data);
 
         if ( ! isset($options['transform']) || (bool) $options['transform']) {
-            $this->runTransformations($entity);
+            $this->runTransformations($entity, $content);
         }
 
         return $entity;
+    }
+
+    public function createImplicit(SymfonyFile $file, array $options = [])
+    {
+        $params = [
+                'is_explicit_upload' => false,
+                'is_transformed'     => true,
+                'transform'          => false,
+            ] + $options;
+
+        return $this->create($file, $params);
     }
 
     /**
@@ -248,14 +286,28 @@ class File
      * Run transformations to the given entity.
      *
      * @param \Ipalaus\File\Contracts\File $entity
+     * @param string                       $content
      *
      * @return void
      */
-    protected function runTransformations(FileContract $entity)
+    protected function runTransformations(FileContract $entity, $content)
     {
-        foreach ($this->transformers as $transformer) {
-            $instance = new $transformer($entity, $this);
-            $instance->transform();
+        foreach ($this->transformers as $class) {
+            if (isset($this->container)) {
+                $instance = $this->container->make($class, [$this, $entity, $content]);
+            } else {
+                $instance = new $class($this, $entity, $content);
+            }
+
+            $result = $instance->transform();
+
+            if ($result instanceof FileContract) {
+                $this->transformationRepository->create([
+                    'original_id'    => $entity->id,
+                    'transformed_id' => $result->id,
+                    'transform'      => $instance->getName(),
+                ]);
+            }
         }
     }
 }

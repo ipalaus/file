@@ -26,6 +26,7 @@ class FileEloquent extends Model implements File
         'user_id',
         'meta_data',
         'is_explicit_upload',
+        'is_transformed',
         'content_hash',
     ];
 
