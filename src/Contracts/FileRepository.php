@@ -2,7 +2,7 @@
 
 namespace Ipalaus\File\Contracts;
 
-interface Repository
+interface FileRepository
 {
     /**
      * Create a file in the repository.

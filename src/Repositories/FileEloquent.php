@@ -1,11 +1,11 @@
 <?php
 
-namespace Ipalaus\File\Repository;
+namespace Ipalaus\File\Repositories;
 
 use Illuminate\Database\Eloquent\Model;
 use Ipalaus\File\Contracts\File;
 
-class Eloquent extends Model implements File
+class FileEloquent extends Model implements File
 {
     /**
      * {@inheritDoc}

@@ -25,6 +25,15 @@ class MigrationIpalausFile extends Migration
             $table->longText('meta_data');
             $table->integer('user_id')->unsigned()->nullable()->index();
             $table->boolean('is_explicit_upload')->default(0);
+            $table->boolean('is_transformed')->default(0);
+            $table->timestamps();
+        });
+
+        Schema::create('file_transformations', function (Blueprint $table) {
+            $table->increments('id');
+            $table->integer('original_id')->unsigned()->index();
+            $table->integer('transformed_id')->unsigned()->index();
+            $table->string('transform')->index();
             $table->timestamps();
         });
     }
@@ -37,5 +46,6 @@ class MigrationIpalausFile extends Migration
     public function down()
     {
         Schema::drop('files');
+        Schema::drop('file_transformations');
     }
 }

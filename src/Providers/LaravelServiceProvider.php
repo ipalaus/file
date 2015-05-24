@@ -4,7 +4,8 @@ namespace Ipalaus\File\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Ipalaus\File\File;
-use Ipalaus\File\Repository\IlluminateRepository;
+use Ipalaus\File\Repositories\IlluminateFileRepository;
+use Ipalaus\File\Repositories\IlluminateTransformationRepository;
 use Ipalaus\File\Storage\Manager as StorageManager;
 
 class LaravelServiceProvider extends ServiceProvider
@@ -31,7 +32,7 @@ class LaravelServiceProvider extends ServiceProvider
     public function register()
     {
         $this->registerStorage();
-        $this->registerRepository();
+        $this->registerRepositories();
         $this->registerFile();
     }
 
@@ -52,14 +53,18 @@ class LaravelServiceProvider extends ServiceProvider
     }
 
     /**
-     * Register the repository.
+     * Register the repositories.
      *
      * @return void
      */
-    protected function registerRepository()
+    protected function registerRepositories()
     {
         $this->app['file.repository'] = $this->app->share(function ($app) {
-            return new IlluminateRepository($app['config']->get('file.model'));
+            return new IlluminateFileRepository($app['config']->get('file.model.file'));
+        });
+
+        $this->app['file.repository.transformation'] = $this->app->share(function ($app) {
+            return new IlluminateTransformationRepository($app['config']->get('file.model.transformation'));
         });
     }
 
@@ -71,7 +76,9 @@ class LaravelServiceProvider extends ServiceProvider
     protected function registerFile()
     {
         $this->app->bind('Ipalaus\File\File', function ($app) {
-            return new File($app['file.storage.store'], $app['file.repository'], $app['request']->files);
+            $transformers = $app['config']->get('file.transformers');
+
+            return new File($app['file.storage.store'], $app['file.repository'], $app['request']->files, $transformers);
         });
 
         $this->app->alias('Ipalaus\File\File', 'file');

@@ -1,17 +1,17 @@
 <?php
 
-namespace Ipalaus\File\Repository;
+namespace Ipalaus\File\Repositories;
 
-use Ipalaus\File\Contracts\Repository;
+use Ipalaus\File\Contracts\TransformationRepository;
 
-class IlluminateRepository implements Repository
+class IlluminateTransformationRepository implements TransformationRepository
 {
     /**
      * The Eloquent model to use.
      *
      * @var string
      */
-    protected $model = Eloquent::class;
+    protected $model = TransformationEloquent::class;
 
     /**
      * Create a new illuminate repository instance..
@@ -38,14 +38,6 @@ class IlluminateRepository implements Repository
     public function findById($id)
     {
         return $this->createModel()->find($id);
-    }
-
-    /**
-     * {@inheritDoc}
-     */
-    public function findByAttributes(array $attributes)
-    {
-        return $this->createModel()->where($attributes)->first();
     }
 
     /**

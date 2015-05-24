@@ -4,7 +4,7 @@ namespace Ipalaus\File;
 
 use Ipalaus\File\Contracts\File as FileContract;
 use Ipalaus\File\Contracts\FileNotFoundException;
-use Ipalaus\File\Contracts\Repository;
+use Ipalaus\File\Contracts\FileRepository;
 use Ipalaus\File\Contracts\Storage;
 use Symfony\Component\HttpFoundation\File\File as SymfonyFile;
 use Symfony\Component\HttpFoundation\File\UploadedFile as SymfonyUploadedFile;
@@ -21,9 +21,9 @@ class File
     protected $storage;
 
     /**
-     * Repository implementation.
+     * FileRepository implementation.
      *
-     * @var \Ipalaus\File\Contracts\Repository
+     * @var \Ipalaus\File\Contracts\FileRepository
      */
     protected $repository;
 
@@ -35,17 +35,26 @@ class File
     protected $fileBag;
 
     /**
+     * File transformers.
+     *
+     * @var array
+     */
+    protected $transformers;
+
+    /**
      * Create a new file instance.
      *
      * @param \Ipalaus\File\Contracts\Storage           $storage
-     * @param \Ipalaus\File\Contracts\Repository        $repository
+     * @param \Ipalaus\File\Contracts\FileRepository    $repository
      * @param \Symfony\Component\HttpFoundation\FileBag $fileBag
+     * @param array                                     $transformers
      */
-    public function __construct(Storage $storage, Repository $repository, FileBag $fileBag)
+    public function __construct(Storage $storage, FileRepository $repository, FileBag $fileBag, array $transformers = [])
     {
         $this->storage = $storage;
         $this->repository = $repository;
         $this->fileBag = $fileBag;
+        $this->transformers = $transformers;
     }
 
     /**
@@ -91,10 +100,13 @@ class File
                 'secret'         => $this->generateSecret(),
             ] + $params;
 
-        // finally save it
-        $file = $this->repository->create($data);
+        $entity = $this->repository->create($data);
 
-        return $file;
+        if ( ! isset($options['transform']) || (bool) $options['transform']) {
+            $this->runTransformations($entity);
+        }
+
+        return $entity;
     }
 
     /**
@@ -230,5 +242,20 @@ class File
         }
 
         return substr(str_replace(['/', '+', '='], '', base64_encode($bytes)), 0, $length);
+    }
+
+    /**
+     * Run transformations to the given entity.
+     *
+     * @param \Ipalaus\File\Contracts\File $entity
+     *
+     * @return void
+     */
+    protected function runTransformations(FileContract $entity)
+    {
+        foreach ($this->transformers as $transformer) {
+            $instance = new $transformer($entity, $this);
+            $instance->transform();
+        }
     }
 }

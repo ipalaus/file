@@ -2,32 +2,33 @@
 
 return [
 
-    'model' => 'Ipalaus\File\Repository\Eloquent',
+    /*
+    |--------------------------------------------------------------------------
+    | File Model
+    |--------------------------------------------------------------------------
+    |
+    | Eloquent model used to store and retrieve the files.
+    |
+    */
+
+    'model' => [
+        'file'           => 'Ipalaus\File\Repositories\FileEloquent',
+        'transformation' => 'Ipalaus\File\Repositories\TransformationEloquent',
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Storage engines
+    |--------------------------------------------------------------------------
+    |
+    | Here you may specify which of the storage engines below you wish to use
+    | as your default storage for all the created files.
+    |
+    */
 
     'storage' => [
 
-        /*
-        |--------------------------------------------------------------------------
-        | Default Storage Driver
-        |--------------------------------------------------------------------------
-        |
-        | Here you may specify which of the storage drivers below you wish
-        | to use as your default storage for all the created files.
-        |
-        */
-
         'default' => 'local',
-
-        /*
-        |--------------------------------------------------------------------------
-        | Storage Drivers
-        |--------------------------------------------------------------------------
-        |
-        | Here you may specify which of the database connections below you wish
-        | to use as your default connection for all database work. Of course
-        | you may use many connections at once using the Database library.
-        |
-        */
 
         'drivers' => [
 
@@ -36,6 +37,19 @@ return [
             ],
 
         ],
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Transformers
+    |--------------------------------------------------------------------------
+    |
+    | TBD
+    |
+    */
+
+    'transformers' => [
+        //
     ],
 
 ];
